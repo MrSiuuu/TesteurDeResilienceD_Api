@@ -14,7 +14,7 @@ const useApiRequest = () => {
 
     const [responses, setResponses] = useState([]);
 
-    const sendRequests = async (url, numRequests, method = 'POST', body = null) => {
+    const sendRequests = async (url, numRequests, method = 'POST', body = null, middlewares = []) => {
         let successes = 0;
         let failures = 0;
         let totalResponseTime = 0;
@@ -34,13 +34,20 @@ const useApiRequest = () => {
 
                 const startTime = Date.now();
 
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'X-PoW-Nonce': pow.nonce,
+                    'X-PoW-Hash': pow.hash,
+                };
+                
+                // Ajoutes les middlewares aux headers
+                middlewares.forEach((mw, index) => {
+                    headers[`X-Middleware-${index + 1}`] = mw;
+                });
+                
                 const options = {
                     method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-PoW-Nonce': pow.nonce,
-                        'X-PoW-Hash': pow.hash,
-                    },
+                    headers,
                 };
 
                 if (method === 'POST' && body) {
