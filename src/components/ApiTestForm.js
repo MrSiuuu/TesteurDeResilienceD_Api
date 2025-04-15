@@ -5,16 +5,16 @@ import '../styles/global.css';
 
 const ApiTestForm = () => {
     const [url, setUrl] = useState('');
-    const [method, setMethod] = useState('GET');
+    const [method, setMethod] = useState('GET'); 
     const [numRequests, setNumRequests] = useState(10);
-    const [body, setBody] = useState('{}');
+    const [body, setBody] = useState('{}'); 
     const [powResult, setPowResult] = useState(null);
     const [activeTab, setActiveTab] = useState('stats');
     const [isLoading, setIsLoading] = useState(false);
 
     const { sendRequests, stats, responses } = useApiRequest();
 
-    // UseState Pour le middleware
+    
     const [middlewareCount, setMiddlewareCount] = useState(0);
     const [middlewares, setMiddlewares] = useState([]);
 
@@ -26,14 +26,25 @@ const ApiTestForm = () => {
 
         setIsLoading(true);
         try {
-            const parsedBody = method === 'POST' ? JSON.parse(body) : null;
-            const result = await sendRequests(url, numRequests, method, parsedBody, middlewares);
             
+            let parsedBody = null;
+            if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+                try {
+                    parsedBody = JSON.parse(body); 
+                } catch (error) {
+                    alert('Le corps de la requête doit être un JSON valide.');
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            const result = await sendRequests(url, numRequests, method, parsedBody, middlewares);
+
             if (result && result.nonce && result.hash) {
                 setPowResult(result);
             }
+
             
-            // Passer automatiquement à l'onglet des statistiques après le test
             setActiveTab('stats');
         } catch (error) {
             alert(`Erreur: ${error.message}`);
@@ -64,30 +75,35 @@ const ApiTestForm = () => {
 
                 <div className="form-group">
                     <label htmlFor="method">Méthode HTTP</label>
-                    <select 
+                    <select
                         id="method"
                         className="form-control"
-                        value={method} 
+                        value={method}
                         onChange={(e) => setMethod(e.target.value)}
                     >
                         <option value="GET">GET</option>
                         <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                        <option value="DELETE">DELETE</option>
                     </select>
                 </div>
 
-                {method === 'POST' && (
+                
+                {(method === 'POST' || method === 'PUT' || method === 'PATCH') && (
                     <div className="form-group">
                         <label htmlFor="body">Corps de la requête (JSON)</label>
                         <textarea
                             id="body"
                             className="form-control"
-                            placeholder='{"key": "value"}'
+                            placeholder='{"Clé": "Valeur"}'
                             rows="4"
                             value={body}
                             onChange={(e) => setBody(e.target.value)}
                         />
                     </div>
                 )}
+
                 <div className="form-group">
                     <label htmlFor="numMiddleware">Nombre de Middleware</label>
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
@@ -100,8 +116,8 @@ const ApiTestForm = () => {
                             value={middlewareCount}
                             onChange={(e) => setMiddlewareCount(parseInt(e.target.value))}
                         />
-                        <button 
-                            className="btn btn-secondary" 
+                        <button
+                            className="btn btn-secondary"
                             onClick={() => {
                                 const newMiddlewares = Array.from({ length: middlewareCount }, (_, i) => middlewares[i] || '');
                                 setMiddlewares(newMiddlewares);
@@ -132,7 +148,6 @@ const ApiTestForm = () => {
                     )}
                 </div>
 
-
                 <div className="form-group">
                     <label htmlFor="numRequests">Nombre de requêtes</label>
                     <input
@@ -146,8 +161,8 @@ const ApiTestForm = () => {
                     />
                 </div>
 
-                <button 
-                    className="btn btn-primary btn-block" 
+                <button
+                    className="btn btn-primary btn-block"
                     onClick={handleTest}
                     disabled={isLoading}
                 >
@@ -166,13 +181,13 @@ const ApiTestForm = () => {
             {stats.totalRequests > 0 && (
                 <div className="results-section">
                     <div className="tabs">
-                        <div 
+                        <div
                             className={`tab ${activeTab === 'stats' ? 'active' : ''}`}
                             onClick={() => setActiveTab('stats')}
                         >
                             Statistiques
                         </div>
-                        <div 
+                        <div
                             className={`tab ${activeTab === 'responses' ? 'active' : ''}`}
                             onClick={() => setActiveTab('responses')}
                         >
@@ -192,8 +207,13 @@ const ApiTestForm = () => {
                             {responses.map((res, index) => (
                                 <div key={index} className="response-item">
                                     <div>
-                                        <span className="status">Requête #{index + 1}</span> – 
-                                        <span className={`status ${res.status >= 200 && res.status < 300 ? 'status-success' : 'status-error'}`}>
+                                        <span className="status">Requête #{index + 1}</span> –
+                                        <span
+                                            className={`status ${res.status >= 200 && res.status < 300
+                                                    ? 'status-success'
+                                                    : 'status-error'
+                                                }`}
+                                        >
                                             Status : {res.status}
                                         </span>
                                         {res.time > 0 && <span> – Temps : {res.time} ms</span>}
