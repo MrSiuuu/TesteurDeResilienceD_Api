@@ -14,6 +14,10 @@ const ApiTestForm = () => {
 
     const { sendRequests, stats, responses } = useApiRequest();
 
+    // UseState Pour le middleware
+    const [middlewareCount, setMiddlewareCount] = useState(0);
+    const [middlewares, setMiddlewares] = useState([]);
+
     const handleTest = async () => {
         if (!url) {
             alert('Veuillez entrer une URL valide');
@@ -23,7 +27,7 @@ const ApiTestForm = () => {
         setIsLoading(true);
         try {
             const parsedBody = method === 'POST' ? JSON.parse(body) : null;
-            const result = await sendRequests(url, numRequests, method, parsedBody);
+            const result = await sendRequests(url, numRequests, method, parsedBody, middlewares);
             
             if (result && result.nonce && result.hash) {
                 setPowResult(result);
@@ -84,6 +88,50 @@ const ApiTestForm = () => {
                         />
                     </div>
                 )}
+                <div className="form-group">
+                    <label htmlFor="numMiddleware">Nombre de Middleware</label>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                        <input
+                            id="numMiddleware"
+                            type="number"
+                            className="form-control"
+                            min="1"
+                            max="100"
+                            value={middlewareCount}
+                            onChange={(e) => setMiddlewareCount(parseInt(e.target.value))}
+                        />
+                        <button 
+                            className="btn btn-secondary" 
+                            onClick={() => {
+                                const newMiddlewares = Array.from({ length: middlewareCount }, (_, i) => middlewares[i] || '');
+                                setMiddlewares(newMiddlewares);
+                            }}
+                        >
+                            Ajouter
+                        </button>
+                    </div>
+
+                    {middlewares.length > 0 && (
+                        <div className="middleware-inputs">
+                            {middlewares.map((mw, idx) => (
+                                <input
+                                    key={idx}
+                                    type="text"
+                                    className="form-control"
+                                    placeholder={`Middleware #${idx + 1}`}
+                                    value={mw}
+                                    onChange={(e) => {
+                                        const updated = [...middlewares];
+                                        updated[idx] = e.target.value;
+                                        setMiddlewares(updated);
+                                    }}
+                                    style={{ marginBottom: '8px' }}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
 
                 <div className="form-group">
                     <label htmlFor="numRequests">Nombre de requêtes</label>
