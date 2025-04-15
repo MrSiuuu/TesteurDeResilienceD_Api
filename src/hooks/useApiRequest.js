@@ -25,7 +25,7 @@ const useApiRequest = () => {
 
         for (let i = 0; i < numRequests; i++) {
             try {
-                const challenge = "test"; 
+                const challenge = `APIChallenge:${Date.now()}`; 
                 const pow = await proofOfWork(challenge, 3); 
 
                 if (!powResult) {
