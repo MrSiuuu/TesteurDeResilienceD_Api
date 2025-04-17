@@ -8,11 +8,43 @@ function StatsDisplay({ stats, responses = [] }) {
     };
     
     responses.forEach(res => {
-        if (res.status && res.status !== 'PoW/Error') {
-            if (res.status >= 400 && res.status < 500) {
+        if (res.status) {
+            // Convertir le status en chaîne pour gérer les cas non numériques
+            const statusStr = String(res.status);
+            
+            // Vérifier si c'est une erreur client (4xx)
+            if ((typeof res.status === 'number' && res.status >= 400 && res.status < 500) || 
+                statusStr.includes('4') || 
+                statusStr.toLowerCase().includes('client') || 
+                statusStr.toLowerCase().includes('bad') ||
+                statusStr.toLowerCase().includes('unauthorized') ||
+                statusStr.toLowerCase().includes('forbidden') ||
+                statusStr.toLowerCase().includes('not found')) {
                 errorCategories['4xx']++;
-            } else if (res.status >= 500 && res.status < 600) {
+            } 
+            // Vérifier si c'est une erreur serveur (5xx)
+            else if ((typeof res.status === 'number' && res.status >= 500 && res.status < 600) || 
+                statusStr.includes('5') || 
+                statusStr.toLowerCase().includes('server') || 
+                statusStr.toLowerCase().includes('error') ||
+                statusStr.toLowerCase().includes('unavailable') ||
+                statusStr.toLowerCase().includes('timeout')) {
                 errorCategories['5xx']++;
+            }
+            // Si ce n'est pas un succès (2xx), c'est une erreur
+            else if (typeof res.status === 'number' && (res.status < 200 || res.status >= 300)) {
+                // Déterminer la catégorie en fonction du premier chiffre
+                const firstDigit = String(res.status)[0];
+                if (firstDigit === '4') {
+                    errorCategories['4xx']++;
+                } else if (firstDigit === '5') {
+                    errorCategories['5xx']++;
+                }
+            }
+            // Pour les statuts textuels qui ne correspondent pas aux patterns ci-dessus
+            else if (typeof res.status === 'string' && res.status !== 'PoW/Error' && !statusStr.match(/^2\d\d$/)) {
+                // Par défaut, considérer comme une erreur client
+                errorCategories['4xx']++;
             }
         }
     });
