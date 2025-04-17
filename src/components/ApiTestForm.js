@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import useApiRequest from '../hooks/useApiRequest';
 import StatsDisplay from './StatsDisplay';
 import LoadingSpinner from './LoadingSpinner';
+import useAiAnalysis from '../hooks/useAiAnalysis';
+import AiErrorAnalysis from './AiErrorAnalysis';
 import '../styles/global.css';
 
 const ApiTestForm = () => {
@@ -15,6 +17,7 @@ const ApiTestForm = () => {
     const [loadingMessage, setLoadingMessage] = useState("Analyse en cours...");
 
     const { sendRequests, stats, responses } = useApiRequest();
+    const { analysis, isAnalyzing, error: aiError, analyzeErrors } = useAiAnalysis();
 
     
     const [middlewareCount, setMiddlewareCount] = useState(0);
@@ -70,6 +73,14 @@ const ApiTestForm = () => {
         } finally {
             clearInterval(messageInterval);
             setIsLoading(false);
+        }
+    };
+
+    const handleAnalyzeErrors = () => {
+        if (responses && responses.length > 0) {
+            analyzeErrors(responses);
+        } else {
+            alert('Aucune donnée de réponse à analyser. Veuillez d\'abord exécuter un test.');
         }
     };
 
@@ -265,6 +276,13 @@ const ApiTestForm = () => {
                             ))}
                         </div>
                     )}
+
+                    <AiErrorAnalysis 
+                        analysis={analysis}
+                        isAnalyzing={isAnalyzing}
+                        error={aiError}
+                        onRequestAnalysis={handleAnalyzeErrors}
+                    />
                 </div>
             )}
         </div>
