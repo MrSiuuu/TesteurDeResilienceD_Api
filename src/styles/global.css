@@ -429,4 +429,74 @@ pre {
 /* Ajouter à la section des statistiques */
 .error-stat .value {
   color: var(--danger-color);
-} 
+}
+
+/* === DÉBUT ANIMATION DE CHARGEMENT === */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.loading-container {
+  background-color: white;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  text-align: center;
+  max-width: 90%;
+  width: 400px;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.5rem;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+}
+
+.loading-message {
+  font-size: 1.2rem;
+  color: var(--dark-color);
+  margin-bottom: 1.5rem;
+}
+
+.loading-progress {
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.loading-bar {
+  height: 100%;
+  width: 0;
+  background-color: var(--primary-color);
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  70% { width: 85%; }
+  90% { width: 95%; }
+  100% { width: 98%; }
+}
+/* === FIN ANIMATION DE CHARGEMENT === */ 

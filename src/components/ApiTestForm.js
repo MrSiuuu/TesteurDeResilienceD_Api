@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import useApiRequest from '../hooks/useApiRequest';
 import StatsDisplay from './StatsDisplay';
+import LoadingSpinner from './LoadingSpinner';
 import '../styles/global.css';
 
 const ApiTestForm = () => {
@@ -11,6 +12,7 @@ const ApiTestForm = () => {
     const [powResult, setPowResult] = useState(null);
     const [activeTab, setActiveTab] = useState('stats');
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState("Analyse en cours...");
 
     const { sendRequests, stats, responses } = useApiRequest();
 
@@ -25,6 +27,23 @@ const ApiTestForm = () => {
         }
 
         setIsLoading(true);
+        
+        // Messages de chargement dynamiques
+        const loadingMessages = [
+            "Préparation des requêtes...",
+            "Calcul du Proof of Work...",
+            "Envoi des requêtes...",
+            "Analyse des réponses...",
+            "Compilation des statistiques..."
+        ];
+        
+        // Changer le message toutes les 2 secondes
+        let messageIndex = 0;
+        const messageInterval = setInterval(() => {
+            setLoadingMessage(loadingMessages[messageIndex]);
+            messageIndex = (messageIndex + 1) % loadingMessages.length;
+        }, 2000);
+        
         try {
             
             let parsedBody = null;
@@ -49,6 +68,7 @@ const ApiTestForm = () => {
         } catch (error) {
             alert(`Erreur: ${error.message}`);
         } finally {
+            clearInterval(messageInterval);
             setIsLoading(false);
         }
     };
@@ -169,6 +189,8 @@ const ApiTestForm = () => {
                     {isLoading ? 'Test en cours...' : 'Lancer le test'}
                 </button>
             </div>
+
+            {isLoading && <LoadingSpinner message={loadingMessage} />}
 
             {powResult && (
                 <div className="pow-result">
