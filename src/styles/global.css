@@ -424,4 +424,9 @@ pre {
   text-align: center;
   padding: 2rem;
   color: #666;
+}
+
+/* Ajouter à la section des statistiques */
+.error-stat .value {
+  color: var(--danger-color);
 } 
