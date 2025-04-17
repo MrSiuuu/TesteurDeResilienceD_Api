@@ -1,6 +1,22 @@
 import React from 'react';
 
-function StatsDisplay({ stats }) {
+function StatsDisplay({ stats, responses = [] }) {
+    // Calculer les totaux d'erreurs par catégorie
+    const errorCategories = {
+        '4xx': 0,
+        '5xx': 0
+    };
+    
+    responses.forEach(res => {
+        if (res.status && res.status !== 'PoW/Error') {
+            if (res.status >= 400 && res.status < 500) {
+                errorCategories['4xx']++;
+            } else if (res.status >= 500 && res.status < 600) {
+                errorCategories['5xx']++;
+            }
+        }
+    });
+
     return (
         <div>
             <h3>Statistiques des tests</h3>
@@ -32,6 +48,16 @@ function StatsDisplay({ stats }) {
                 <div className="stat-item">
                     <div className="value">{stats.successRate}%</div>
                     <p>Taux de réussite</p>
+                </div>
+                
+                {/* Cartes pour les catégories d'erreurs (toujours affichées) */}
+                <div className="stat-item error-stat">
+                    <div className="value">{errorCategories['4xx']}</div>
+                    <p>Erreurs Client (4xx)</p>
+                </div>
+                <div className="stat-item error-stat">
+                    <div className="value">{errorCategories['5xx']}</div>
+                    <p>Erreurs Serveur (5xx)</p>
                 </div>
             </div>
         </div>

@@ -2,52 +2,86 @@ import React, { useState, useEffect } from 'react';
 
 const ErrorReferenceCards = ({ responses = [] }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [errorCounts, setErrorCounts] = useState({});
+    const [categoryTotals, setCategoryTotals] = useState({});
 
-    // Calculer le nombre d'occurrences de chaque code d'erreur
+    // Calculer les totaux par catégorie d'erreur
     useEffect(() => {
-        const counts = {};
+        const totals = {};
+        
         responses.forEach(res => {
             if (res.status && res.status !== 'PoW/Error' && (res.status < 200 || res.status >= 300)) {
-                counts[res.status] = (counts[res.status] || 0) + 1;
+                // Déterminer la catégorie
+                let category = 'Autre';
+                
+                if (res.status >= 400 && res.status < 500) {
+                    category = '4xx';
+                } else if (res.status >= 500 && res.status < 600) {
+                    category = '5xx';
+                } else if (res.status >= 300 && res.status < 400) {
+                    category = '3xx';
+                }
+                
+                // Incrémenter le compteur de la catégorie
+                totals[category] = (totals[category] || 0) + 1;
+                
+                // Compter également le code spécifique
+                const specificCode = `${res.status}`;
+                totals[specificCode] = (totals[specificCode] || 0) + 1;
             }
         });
-        setErrorCounts(counts);
+        
+        setCategoryTotals(totals);
     }, [responses]);
 
-    const errorCodes = [
-        { code: 400, name: "Bad Request", description: "La requête est mal formée ou contient des paramètres invalides." },
-        { code: 401, name: "Unauthorized", description: "Authentification nécessaire pour accéder à la ressource." },
-        { code: 403, name: "Forbidden", description: "Le serveur a compris la requête mais refuse de l'exécuter (droits insuffisants)." },
-        { code: 404, name: "Not Found", description: "La ressource demandée n'existe pas sur le serveur." },
-        { code: 405, name: "Method Not Allowed", description: "La méthode HTTP utilisée n'est pas autorisée pour cette ressource." },
-        { code: 408, name: "Request Timeout", description: "Le serveur a attendu trop longtemps une requête du client." },
-        { code: 413, name: "Payload Too Large", description: "La requête est trop volumineuse pour être traitée par le serveur." },
-        { code: 429, name: "Too Many Requests", description: "Trop de requêtes ont été envoyées dans un laps de temps donné." },
-        { code: 500, name: "Internal Server Error", description: "Erreur interne du serveur, généralement due à un problème de configuration." },
-        { code: 502, name: "Bad Gateway", description: "Le serveur, agissant comme une passerelle, a reçu une réponse invalide." },
-        { code: 503, name: "Service Unavailable", description: "Le serveur est temporairement indisponible (maintenance ou surcharge)." },
-        { code: 504, name: "Gateway Timeout", description: "Le serveur, agissant comme une passerelle, n'a pas reçu de réponse à temps." }
+    // Définir les catégories à afficher
+    const categories = [
+        { id: '4xx', name: 'Erreurs Client (4xx)', description: 'Requêtes mal formées ou ressources inexistantes' },
+        { id: '5xx', name: 'Erreurs Serveur (5xx)', description: 'Problèmes côté serveur' },
+        { id: '3xx', name: 'Redirections (3xx)', description: 'Redirections ou ressources déplacées' },
+        { id: 'Autre', name: 'Autres Erreurs', description: 'Codes d\'erreur non standards' }
     ];
 
     return (
         <div className="error-reference-section">
             <div className="error-reference-header" onClick={() => setIsExpanded(!isExpanded)}>
-                <h3>Référence des codes d'erreur HTTP {isExpanded ? '▼' : '▶'}</h3>
+                <h3>Statistiques des erreurs par catégorie {isExpanded ? '▼' : '▶'}</h3>
             </div>
             
             {isExpanded && (
-                <div className="error-cards-grid">
-                    {errorCodes.map((error) => (
-                        <div key={error.code} className="error-reference-card">
-                            <div className="error-code">{error.code}</div>
-                            {errorCounts[error.code] > 0 && (
-                                <div className="error-count">{errorCounts[error.code]}</div>
-                            )}
-                            <h4>{error.name}</h4>
-                            <p>{error.description}</p>
-                        </div>
+                <div className="error-summary">
+                    {categories.map((category) => (
+                        (categoryTotals[category.id] > 0) && (
+                            <div key={category.id} className="error-category-summary">
+                                <div className="category-header">
+                                    <h3>{category.name}</h3>
+                                    <div className="category-count">{categoryTotals[category.id]}</div>
+                                </div>
+                                <p>{category.description}</p>
+                                
+                                <div className="specific-codes">
+                                    {Object.keys(categoryTotals)
+                                        .filter(code => !isNaN(parseInt(code)) && 
+                                            (category.id === '4xx' && parseInt(code) >= 400 && parseInt(code) < 500) ||
+                                            (category.id === '5xx' && parseInt(code) >= 500 && parseInt(code) < 600) ||
+                                            (category.id === '3xx' && parseInt(code) >= 300 && parseInt(code) < 400) ||
+                                            (category.id === 'Autre' && (parseInt(code) < 300 || parseInt(code) >= 600))
+                                        )
+                                        .map(code => (
+                                            <div key={code} className="code-badge">
+                                                {code}: <span>{categoryTotals[code]}</span>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                        )
                     ))}
+                    
+                    {Object.keys(categoryTotals).length === 0 && (
+                        <div className="no-errors">
+                            <p>Aucune erreur détectée dans les requêtes.</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
