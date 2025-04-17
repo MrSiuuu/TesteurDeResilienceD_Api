@@ -50,7 +50,7 @@ const useApiRequest = () => {
                     headers,
                 };
 
-                if (method === 'POST' && body) {
+                if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && body) {
                     options.body = JSON.stringify(body);
                 }
 
@@ -64,19 +64,39 @@ const useApiRequest = () => {
                 if (timeTaken < minResponseTime) minResponseTime = timeTaken;
                 if (timeTaken > maxResponseTime) maxResponseTime = timeTaken;
 
-                const data = await response.json().catch(() => response.text());
+                let data;
+                let errorDetails = null;
+                
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    try {
+                        data = await response.text();
+                    } catch (textError) {
+                        data = "Impossible de lire la réponse";
+                    }
+                }
 
                 if (response.ok) {
                     successes++;
                 } else {
                     failures++;
-                    
+                    // Création d'un objet détaillé pour les erreurs
+                    errorDetails = {
+                        code: response.status,
+                        statusText: response.statusText,
+                        type: getErrorType(response.status),
+                        suggestion: getSuggestionForError(response.status, method)
+                    };
                 }
 
                 collectedResponses.push({
                     status: response.status,
                     time: timeTaken,
                     data,
+                    errorDetails,
+                    method,
+                    url
                 });
             } catch (error) {
                 failures++;
@@ -84,6 +104,14 @@ const useApiRequest = () => {
                     status: 'PoW/Error',
                     time: 0,
                     data: error.message,
+                    errorDetails: {
+                        code: 'Exception',
+                        statusText: 'Erreur JavaScript',
+                        type: 'Erreur de connexion ou de Proof of Work',
+                        suggestion: 'Vérifiez votre connexion internet ou si l\'URL est correcte'
+                    },
+                    method,
+                    url
                 });
             }
         }
@@ -105,6 +133,51 @@ const useApiRequest = () => {
 
         return powResult; 
     };
+
+    // === DÉBUT FONCTIONNALITÉ DÉTAIL DES ERREURS ===
+    // Fonction pour déterminer le type d'erreur
+    const getErrorType = (statusCode) => {
+        if (statusCode >= 400 && statusCode < 500) {
+            return 'Erreur client';
+        } else if (statusCode >= 500) {
+            return 'Erreur serveur';
+        } else {
+            return 'Erreur inconnue';
+        }
+    };
+
+    // Fonction pour suggérer des solutions selon le code d'erreur
+    const getSuggestionForError = (statusCode, method) => {
+        switch (statusCode) {
+            case 400:
+                return 'Vérifiez le format de votre requête';
+            case 401:
+                return 'Authentification requise. Vérifiez vos identifiants';
+            case 403:
+                return 'Accès interdit. Vous n\'avez pas les droits nécessaires';
+            case 404:
+                return 'Ressource non trouvée. Vérifiez l\'URL';
+            case 405:
+                return `La méthode ${method} n'est pas autorisée pour cette ressource`;
+            case 408:
+                return 'Délai d\'attente dépassé. Réessayez plus tard';
+            case 413:
+                return 'Requête trop volumineuse. Réduisez la taille des données';
+            case 429:
+                return 'Trop de requêtes. Attendez avant de réessayer';
+            case 500:
+                return 'Erreur interne du serveur. Contactez l\'administrateur';
+            case 502:
+                return 'Passerelle incorrecte. Le serveur en amont est peut-être indisponible';
+            case 503:
+                return 'Service indisponible. Réessayez plus tard';
+            case 504:
+                return 'Délai de passerelle dépassé. Réessayez plus tard';
+            default:
+                return 'Vérifiez les paramètres de votre requête et réessayez';
+        }
+    };
+    // === FIN FONCTIONNALITÉ DÉTAIL DES ERREURS ===
 
     return { sendRequests, stats, responses };
 };

@@ -218,6 +218,20 @@ const ApiTestForm = () => {
                                         </span>
                                         {res.time > 0 && <span> – Temps : {res.time} ms</span>}
                                     </div>
+                                    
+                                    {/* === DÉBUT FONCTIONNALITÉ DÉTAIL DES ERREURS === */}
+                                    {res.errorDetails && (
+                                        <div className="error-details">
+                                            <h4>Détails de l'erreur</h4>
+                                            <p><strong>Type :</strong> {res.errorDetails.type}</p>
+                                            <p><strong>Message :</strong> {res.errorDetails.statusText || 'Aucun message'}</p>
+                                            <p><strong>Suggestion :</strong> {res.errorDetails.suggestion}</p>
+                                            <p><strong>Méthode utilisée :</strong> {res.method}</p>
+                                            <p><strong>URL appelée :</strong> {res.url}</p>
+                                        </div>
+                                    )}
+                                    {/* === FIN FONCTIONNALITÉ DÉTAIL DES ERREURS === */}
+                                    
                                     <div className="response-data">
                                         <pre>
                                             {typeof res.data === 'object'
