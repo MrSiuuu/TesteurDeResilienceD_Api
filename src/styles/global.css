@@ -210,4 +210,30 @@ pre {
   .stats-grid {
     grid-template-columns: 1fr 1fr;
   }
-} 
+}
+
+/* === DÉBUT FONCTIONNALITÉ DÉTAIL DES ERREURS === */
+.error-details {
+  background-color: #ffebee;
+  border-left: 4px solid var(--danger-color);
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: var(--border-radius);
+}
+
+.error-details h4 {
+  color: var(--danger-color);
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.error-details p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.status-error {
+  color: var(--danger-color);
+  font-weight: bold;
+}
+/* === FIN FONCTIONNALITÉ DÉTAIL DES ERREURS === */ 
