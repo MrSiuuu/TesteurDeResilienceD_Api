@@ -1,19 +1,25 @@
-FROM node:18
+FROM node:18-alpine
 
+# Définir le répertoire de travail
 WORKDIR /app
 
+# Copier les fichiers de configuration des dépendances
+COPY package*.json ./
+
+# Installer les dépendances
+RUN npm install
+
+# Copier le reste des fichiers de l'application
 COPY . .
 
-# Installer les dépendances React
-RUN npm install
+# Définir la variable d'environnement pour la production
+ENV NODE_ENV=production
 
-# Builder le React
+# Builder l'application React
 RUN npm run build
 
-# Aller dans le dossier serveur et installer
-WORKDIR /app/server
-RUN npm install
-
+# Exposer le port sur lequel le serveur s'exécute
 EXPOSE 5000
 
-CMD ["node", "server.js"]
+# Commande pour démarrer l'application
+CMD ["node", "server/server.js"]
