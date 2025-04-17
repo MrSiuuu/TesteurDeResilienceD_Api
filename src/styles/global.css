@@ -236,4 +236,93 @@ pre {
   color: var(--danger-color);
   font-weight: bold;
 }
-/* === FIN FONCTIONNALITÉ DÉTAIL DES ERREURS === */ 
+/* === FIN FONCTIONNALITÉ DÉTAIL DES ERREURS === */
+
+/* === DÉBUT CARTES DE RÉFÉRENCE DES ERREURS === */
+.error-reference-section {
+  margin-top: 2rem;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+}
+
+.error-reference-header {
+  padding: 1rem 1.5rem;
+  background-color: var(--light-color);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.error-reference-header:hover {
+  background-color: #e3e8eb;
+}
+
+.error-reference-header h3 {
+  margin: 0;
+  color: var(--dark-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.error-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.error-reference-card {
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  border-left: 4px solid var(--danger-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.error-code {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: rgba(231, 76, 60, 0.2);
+}
+
+.error-reference-card h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--danger-color);
+}
+
+.error-reference-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--dark-color);
+}
+
+.error-count {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background-color: var(--danger-color);
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50%;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-reference-card.has-errors {
+  border-left-width: 6px;
+  background-color: #fff8f8;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.1);
+}
+/* === FIN CARTES DE RÉFÉRENCE DES ERREURS === */ 

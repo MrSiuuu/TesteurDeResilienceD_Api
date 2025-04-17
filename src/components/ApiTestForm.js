@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import useApiRequest from '../hooks/useApiRequest';
 import StatsDisplay from './StatsDisplay';
+import ErrorReferenceCards from './ErrorReferenceCards';
 import '../styles/global.css';
 
 const ApiTestForm = () => {
@@ -245,6 +246,8 @@ const ApiTestForm = () => {
                     )}
                 </div>
             )}
+
+            <ErrorReferenceCards responses={responses} />
         </div>
     );
 };
