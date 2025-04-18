@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { proofOfWork } from '../utils/pow'; 
+import { proofOfWork } from '../utils/pow';
 
 const useApiRequest = () => {
     const [stats, setStats] = useState({
@@ -13,125 +13,161 @@ const useApiRequest = () => {
     });
 
     const [responses, setResponses] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     const sendRequests = async (url, numRequests, method = 'POST', body = null, middlewares = []) => {
+        setIsLoading(true); // Activer l'indicateur de chargement
+        console.log("Début des requêtes...");
+        
         let successes = 0;
         let failures = 0;
         let totalResponseTime = 0;
         let minResponseTime = Infinity;
         let maxResponseTime = 0;
         let collectedResponses = [];
-        let powResult = null; 
+        let powResult = null;
+        
+        const startTime = Date.now(); // Pour garantir un temps minimum d'affichage
 
-        for (let i = 0; i < numRequests; i++) {
-            try {
-                const challenge = `APIChallenge:${Date.now()}`; 
-                const pow = await proofOfWork(challenge, 3); 
+        try {
+            // Calculer le proof of work une seule fois pour toutes les requêtes
+            console.log("Calcul du Proof of Work...");
+            const challenge = `APIChallenge:${Date.now()}`;
+            powResult = await proofOfWork(challenge, 3);
+            console.log("Proof of Work calculé:", powResult);
 
-                if (!powResult) {
-                    powResult = pow; 
-                }
-
-                const startTime = Date.now();
-
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'X-PoW-Nonce': pow.nonce,
-                    'X-PoW-Hash': pow.hash,
-                };
-                
-                // Ajoutes les middlewares aux headers
-                middlewares.forEach((mw, index) => {
-                    headers[`X-Middleware-${index + 1}`] = mw;
-                });
-                
-                const options = {
-                    method,
-                    headers,
-                };
-
-                if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && body) {
-                    options.body = JSON.stringify(body);
-                }
-
-                const response = await fetch(url, options);
-                const endTime = Date.now();
-
-                const timeTaken = endTime - startTime;
-                totalResponseTime += timeTaken;
-
-                
-                if (timeTaken < minResponseTime) minResponseTime = timeTaken;
-                if (timeTaken > maxResponseTime) maxResponseTime = timeTaken;
-
-                let data;
-                let errorDetails = null;
-                
+            // Envoyer les requêtes
+            for (let i = 0; i < numRequests; i++) {
                 try {
-                    data = await response.json();
-                } catch (e) {
-                    try {
-                        data = await response.text();
-                    } catch (textError) {
-                        data = "Impossible de lire la réponse";
-                    }
-                }
+                    const requestStartTime = Date.now();
 
-                if (response.ok) {
-                    successes++;
-                } else {
-                    failures++;
-                    // Création d'un objet détaillé pour les erreurs
-                    errorDetails = {
-                        code: response.status,
-                        statusText: response.statusText,
-                        type: getErrorType(response.status),
-                        suggestion: getSuggestionForError(response.status, method)
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'X-PoW-Nonce': powResult.nonce,
+                        'X-PoW-Hash': powResult.hash,
                     };
-                }
+                    
+                    // Ajouter les middlewares aux headers
+                    middlewares.forEach((mw, index) => {
+                        headers[`X-Middleware-${index + 1}`] = mw;
+                    });
+                    
+                    const options = {
+                        method,
+                        headers,
+                    };
 
-                collectedResponses.push({
-                    status: response.status,
-                    time: timeTaken,
-                    data,
-                    errorDetails,
-                    method,
-                    url
-                });
-            } catch (error) {
+                    if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && body) {
+                        options.body = JSON.stringify(body);
+                    }
+
+                    console.log(`Envoi de la requête ${i+1}/${numRequests} à ${url}`);
+                    const response = await fetch(url, options);
+                    const requestEndTime = Date.now();
+
+                    const timeTaken = requestEndTime - requestStartTime;
+                    totalResponseTime += timeTaken;
+                    
+                    if (timeTaken < minResponseTime) minResponseTime = timeTaken;
+                    if (timeTaken > maxResponseTime) maxResponseTime = timeTaken;
+
+                    let data;
+                    let errorDetails = null;
+                    
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        try {
+                            data = await response.text();
+                        } catch (textError) {
+                            data = "Impossible de lire la réponse";
+                        }
+                    }
+
+                    if (response.ok) {
+                        successes++;
+                    } else {
+                        failures++;
+                        // Création d'un objet détaillé pour les erreurs
+                        errorDetails = {
+                            code: response.status,
+                            statusText: response.statusText,
+                            type: getErrorType(response.status),
+                            suggestion: getSuggestionForError(response.status, method)
+                        };
+                    }
+
+                    collectedResponses.push({
+                        status: response.status,
+                        time: timeTaken,
+                        data,
+                        errorDetails,
+                        method,
+                        url
+                    });
+                } catch (error) {
+                    console.error(`Erreur lors de la requête ${i+1}:`, error);
+                    failures++;
+                    collectedResponses.push({
+                        status: 'Error',
+                        time: 0,
+                        data: error.message,
+                        errorDetails: {
+                            code: 'Exception',
+                            statusText: 'Erreur JavaScript',
+                            type: 'Erreur de connexion',
+                            suggestion: 'Vérifiez votre connexion internet ou si l\'URL est correcte'
+                        },
+                        method,
+                        url
+                    });
+                }
+            }
+        } catch (powError) {
+            console.error("Erreur lors du calcul du Proof of Work:", powError);
+            // En cas d'erreur avec le PoW, on continue quand même avec les requêtes
+            for (let i = 0; i < numRequests; i++) {
                 failures++;
                 collectedResponses.push({
                     status: 'PoW/Error',
                     time: 0,
-                    data: error.message,
+                    data: powError.message,
                     errorDetails: {
-                        code: 'Exception',
-                        statusText: 'Erreur JavaScript',
-                        type: 'Erreur de connexion ou de Proof of Work',
-                        suggestion: 'Vérifiez votre connexion internet ou si l\'URL est correcte'
+                        code: 'PoW Exception',
+                        statusText: 'Erreur de Proof of Work',
+                        type: 'Erreur technique',
+                        suggestion: 'Cette erreur est liée à l\'environnement. Les requêtes sont envoyées sans Proof of Work.'
                     },
                     method,
                     url
                 });
             }
+        } finally {
+            // Garantir un temps minimum d'affichage du chargement (1 seconde)
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime < 1000) {
+                await new Promise(resolve => setTimeout(resolve, 1000 - elapsedTime));
+            }
+            
+            const avgResponseTime = numRequests ? (totalResponseTime / numRequests).toFixed(2) : 0;
+            const successRate = numRequests ? ((successes / numRequests) * 100).toFixed(2) : 0;
+
+            setStats({
+                totalRequests: numRequests,
+                successes,
+                failures,
+                avgResponseTime,
+                minResponseTime: minResponseTime === Infinity ? 0 : minResponseTime,
+                maxResponseTime,
+                successRate,
+            });
+
+            setResponses(collectedResponses);
+            setIsLoading(false); // Désactiver l'indicateur de chargement
+            console.log("Fin des requêtes");
         }
 
-        const avgResponseTime = numRequests ? (totalResponseTime / numRequests).toFixed(2) : 0;
-        const successRate = numRequests ? ((successes / numRequests) * 100).toFixed(2) : 0;
-
-        setStats({
-            totalRequests: numRequests,
-            successes,
-            failures,
-            avgResponseTime,
-            minResponseTime: minResponseTime === Infinity ? 0 : minResponseTime,
-            maxResponseTime,
-            successRate,
-        });
-
-        setResponses(collectedResponses);
-
-        return powResult; 
+        return powResult;
     };
 
     // === DÉBUT FONCTIONNALITÉ DÉTAIL DES ERREURS ===
@@ -179,7 +215,7 @@ const useApiRequest = () => {
     };
     // === FIN FONCTIONNALITÉ DÉTAIL DES ERREURS ===
 
-    return { sendRequests, stats, responses };
+    return { sendRequests, stats, responses, isLoading };
 };
 
 export default useApiRequest;
