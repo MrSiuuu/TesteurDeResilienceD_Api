@@ -6,6 +6,9 @@ Un outil puissant pour tester la résilience et la performance des API RESTful. 
 
 ![Screenshot de l'interface de l'application](app.png)
 
+### Le Logo
+![Le Logo](logo.png)
+
 ## Fonctionnalités principales
 
 ### 1. Test de charge API
