@@ -25,17 +25,10 @@ const useApiRequest = () => {
         let minResponseTime = Infinity;
         let maxResponseTime = 0;
         let collectedResponses = [];
-        let powResult = null;
         
         const startTime = Date.now(); // Pour garantir un temps minimum d'affichage
 
         try {
-            // Calculer le proof of work une seule fois pour toutes les requêtes
-            console.log("Calcul du Proof of Work...");
-            const challenge = `APIChallenge:${Date.now()}`;
-            powResult = await proofOfWork(challenge, 3);
-            console.log("Proof of Work calculé:", powResult);
-
             // Envoyer les requêtes
             for (let i = 0; i < numRequests; i++) {
                 try {
@@ -43,13 +36,13 @@ const useApiRequest = () => {
 
                     const headers = {
                         'Content-Type': 'application/json',
-                        'X-PoW-Nonce': powResult.nonce,
-                        'X-PoW-Hash': powResult.hash,
                     };
                     
                     // Ajouter les middlewares aux headers
-                    middlewares.forEach((mw, index) => {
-                        headers[`X-Middleware-${index + 1}`] = mw;
+                    middlewares.forEach((mw) => {
+                        if (mw.key && mw.key.trim() !== '') {
+                            headers[mw.key] = mw.value || '';
+                        }
                     });
                     
                     const options = {
@@ -123,25 +116,6 @@ const useApiRequest = () => {
                     });
                 }
             }
-        } catch (powError) {
-            console.error("Erreur lors du calcul du Proof of Work:", powError);
-            // En cas d'erreur avec le PoW, on continue quand même avec les requêtes
-            for (let i = 0; i < numRequests; i++) {
-                failures++;
-                collectedResponses.push({
-                    status: 'PoW/Error',
-                    time: 0,
-                    data: powError.message,
-                    errorDetails: {
-                        code: 'PoW Exception',
-                        statusText: 'Erreur de Proof of Work',
-                        type: 'Erreur technique',
-                        suggestion: 'Cette erreur est liée à l\'environnement. Les requêtes sont envoyées sans Proof of Work.'
-                    },
-                    method,
-                    url
-                });
-            }
         } finally {
             // Garantir un temps minimum d'affichage du chargement (1 seconde)
             const elapsedTime = Date.now() - startTime;
@@ -166,8 +140,6 @@ const useApiRequest = () => {
             setIsLoading(false); // Désactiver l'indicateur de chargement
             console.log("Fin des requêtes");
         }
-
-        return powResult;
     };
 
     // === DÉBUT FONCTIONNALITÉ DÉTAIL DES ERREURS ===

@@ -23,7 +23,7 @@ const ApiTester = () => {
       {isLoading && (
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>Calcul du Proof of Work et envoi des requêtes...</p>
+          <p>Envoi des requêtes...</p>
         </div>
       )}
       
