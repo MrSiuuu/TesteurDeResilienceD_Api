@@ -11,7 +11,6 @@ const ApiTestForm = () => {
     const [method, setMethod] = useState('GET'); 
     const [numRequests, setNumRequests] = useState(10);
     const [body, setBody] = useState('{}'); 
-    const [powResult, setPowResult] = useState(null);
     const [activeTab, setActiveTab] = useState('stats');
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState("Analyse en cours...");
@@ -34,7 +33,6 @@ const ApiTestForm = () => {
         // Messages de chargement dynamiques
         const loadingMessages = [
             "Préparation des requêtes...",
-            "Calcul du Proof of Work...",
             "Envoi des requêtes...",
             "Analyse des réponses...",
             "Compilation des statistiques..."
@@ -60,12 +58,7 @@ const ApiTestForm = () => {
                 }
             }
 
-            const result = await sendRequests(url, numRequests, method, parsedBody, middlewares);
-
-            if (result && result.nonce && result.hash) {
-                setPowResult(result);
-            }
-
+            await sendRequests(url, numRequests, method, parsedBody, middlewares);
             
             setActiveTab('stats');
         } catch (error) {
@@ -150,7 +143,10 @@ const ApiTestForm = () => {
                         <button
                             className="btn btn-secondary"
                             onClick={() => {
-                                const newMiddlewares = Array.from({ length: middlewareCount }, (_, i) => middlewares[i] || '');
+                                const newMiddlewares = Array.from(
+                                    { length: middlewareCount }, 
+                                    (_, i) => middlewares[i] || { key: '', value: '' }
+                                );
                                 setMiddlewares(newMiddlewares);
                             }}
                         >
@@ -161,19 +157,30 @@ const ApiTestForm = () => {
                     {middlewares.length > 0 && (
                         <div className="middleware-inputs">
                             {middlewares.map((mw, idx) => (
-                                <input
-                                    key={idx}
-                                    type="text"
-                                    className="form-control"
-                                    placeholder={`Middleware #${idx + 1}`}
-                                    value={mw}
-                                    onChange={(e) => {
-                                        const updated = [...middlewares];
-                                        updated[idx] = e.target.value;
-                                        setMiddlewares(updated);
-                                    }}
-                                    style={{ marginBottom: '8px' }}
-                                />
+                                <div key={idx} style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Clé (ex: Authorization)"
+                                        value={mw.key || ''}
+                                        onChange={(e) => {
+                                            const updated = [...middlewares];
+                                            updated[idx] = { ...updated[idx], key: e.target.value };
+                                            setMiddlewares(updated);
+                                        }}
+                                    />
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Valeur (ex: Bearer token)"
+                                        value={mw.value || ''}
+                                        onChange={(e) => {
+                                            const updated = [...middlewares];
+                                            updated[idx] = { ...updated[idx], value: e.target.value };
+                                            setMiddlewares(updated);
+                                        }}
+                                    />
+                                </div>
                             ))}
                         </div>
                     )}
@@ -202,14 +209,6 @@ const ApiTestForm = () => {
             </div>
 
             {isLoading && <LoadingSpinner message={loadingMessage} />}
-
-            {powResult && (
-                <div className="pow-result">
-                    <h3>Résultat du Proof of Work</h3>
-                    <p><strong>Nonce trouvé :</strong> {powResult.nonce}</p>
-                    <p><strong>Hash :</strong> {powResult.hash}</p>
-                </div>
-            )}
 
             {stats.totalRequests > 0 && (
                 <div className="results-section">
